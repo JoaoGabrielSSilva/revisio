@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Revisio - Controle de Estudos</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<header>
+  <h1>📚 Revisio</h1>
+  <p>Controle de estudos por revisão de questões</p>
+</header>
+
+<div class="container">
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+    <button class="tab-btn" data-tab="topics">Matérias</button>
+    <button class="tab-btn" data-tab="schedule">Cronograma</button>
+    <button class="tab-btn" data-tab="review">Registrar Revisão</button>
+    <button class="tab-btn" data-tab="history">Histórico</button>
+    <button class="tab-btn" data-tab="data">Dados</button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="view active" id="view-dashboard">
+    <div class="card">
+      <h2>Resumo Geral</h2>
+      <div class="grid cols-3" id="summaryBoxes"></div>
+    </div>
+
+    <div class="card">
+      <h2>Evolução: Acertos x Erros por Revisão</h2>
+      <div class="chart-wrap"><canvas id="chartAcertosErros"></canvas></div>
+    </div>
+
+    <div class="card">
+      <h2>Evolução do Aproveitamento (%)</h2>
+      <div class="chart-wrap"><canvas id="chartAproveitamento"></canvas></div>
+    </div>
+
+    <div class="card">
+      <h2>Desempenho por Matéria</h2>
+      <div class="chart-wrap"><canvas id="chartPorMateria"></canvas></div>
+    </div>
+  </div>
+
+  <!-- TOPICS -->
+  <div class="view" id="view-topics">
+    <div class="card">
+      <h2>Nova Matéria / Tópico</h2>
+      <form id="formTopic">
+        <label>Nome do tópico</label>
+        <input type="text" id="topicName" placeholder="Ex: Direito Constitucional - Controle de Constitucionalidade" required>
+        <label>Matéria (categoria)</label>
+        <input type="text" id="topicSubject" placeholder="Ex: Direito Constitucional" required>
+        <label>Data que estudou</label>
+        <div class="date-with-btn">
+        <input type="date" id="topicStudyDate" required>
+        <button type="button" class="btn-today" id="btnTodayTopic">Hoje</button>
+        </div>
+        <button type="submit" class="btn-primary">Adicionar Tópico e Gerar Cronograma</button>
+      </form>
+      <p style="color:var(--muted);font-size:.75rem;margin:0;">Ao adicionar, serão geradas automaticamente 4 datas de revisão sugeridas: 1, 7, 15 e 30 dias após o estudo.</p>
+    </div>
+
+    <div class="card">
+      <h2>Meus Tópicos</h2>
+      <div id="topicList"><div class="empty">Nenhum tópico cadastrado ainda.</div></div>
+    </div>
+  </div>
+
+  <!-- SCHEDULE -->
+  <div class="view" id="view-schedule">
+    <div class="card">
+      <h2>Cronograma de Revisões</h2>
+      <p style="color:var(--muted);font-size:.8rem;margin-top:0;">Prazos calculados automaticamente: 1, 7, 15 e 30 dias após a data em que cada tópico foi estudado.</p>
+      <div id="scheduleList"><div class="empty">Nenhum tópico cadastrado ainda.</div></div>
+    </div>
+  </div>
+
+  <!-- REVIEW FORM -->
+  <div class="view" id="view-review">
+    <div class="card">
+      <h2>Registrar Revisão</h2>
+      <form id="formReview">
+        <label>Tópico</label>
+        <select id="reviewTopic" required></select>
+
+        <div class="grid">
+          <div>
+            <label>Questões acertadas</label>
+            <input type="number" id="reviewCorrect" min="0" value="0" required>
+          </div>
+          <div>
+            <label>Questões erradas</label>
+            <input type="number" id="reviewWrong" min="0" value="0" required>
+          </div>
+        </div>
+
+        <label>Data da revisão</label>
+        <input type="date" id="reviewDate" required>
+
+        <label>Observações (opcional)</label>
+        <input type="text" id="reviewNotes" placeholder="Ex: Errei questões de prazo processual">
+
+        <button type="submit" class="btn-primary">Salvar Revisão</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="view" id="view-history">
+    <div class="card">
+      <h2>Histórico de Revisões</h2>
+      <label>Filtrar por tópico</label>
+      <select id="filterTopic"></select>
+      <div id="historyList" style="margin-top:14px;"><div class="empty">Nenhuma revisão registrada ainda.</div></div>
+    </div>
+  </div>
+
+  <!-- DATA -->
+  <div class="view" id="view-data">
+    <div class="card">
+      <h2>Exportar Dados</h2>
+      <p style="color:var(--muted);font-size:.82rem;margin-top:0;">Seus dados ficam salvos automaticamente no navegador (localStorage). Use os botões abaixo para gerar um backup.</p>
+      <div class="export-buttons">
+        <button class="btn-secondary" id="btnExportJson">⬇ Exportar JSON</button>
+        <button class="btn-secondary" id="btnExportXlsx">⬇ Exportar XLSX</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Importar Dados (JSON)</h2>
+      <input type="file" id="importFile" accept="application/json">
+      <button class="btn-secondary" id="btnImportJson">Importar</button>
+    </div>
+
+    <div class="card">
+      <h2>Zona de Risco</h2>
+      <button class="btn-danger" id="btnResetAll" style="width:100%;">Apagar todos os dados</button>
+    </div>
+  </div>
+
+</div>
+
+<footer class="app-footer">
+  Desenvolvido por João Gabriel S. Silva - 2026 · <a href="https://github.com/JoaoGabrielSSilva" target="_blank" rel="noopener noreferrer">GitHub</a>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
