@@ -9,13 +9,43 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <meta name="google-site-verification" content="9nBWKkCxHLVuX9hcQnfgeIJPLztw2h22yt3uQ3PeNBU" />
 <meta name="google-adsense-account" content="ca-pub-1875445178898408">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 </head>
 <body>
 
 <header>
-  <h1>📚 Revisio</h1>
+  <h1>📚 Revisio Study</h1>
   <p>Controle de estudos por revisão de questões</p>
 </header>
+
+<!-- POMODORO WIDGET -->
+<div class="pomodoro-widget" id="pomodoroWidget">
+  <span class="pw-phase" id="pwPhase">Foco</span>
+  <span class="pw-time" id="pwTime">25:00</span>
+  <span class="pw-sessions" id="pwSessions">Sessão 1/4</span>
+</div>
+
+<!-- POMODORO FLOATING BUTTON -->
+<button class="pomodoro-fab" id="pomodoroFab" title="Pomodoro">🍅</button>
+
+<!-- POMODORO PANEL -->
+<div class="pomodoro-panel" id="pomodoroPanel">
+  <div class="pp-header">
+    <span>Pomodoro</span>
+    <button class="pp-close" id="pomodoroClose">✕</button>
+  </div>
+  <div class="pp-phase" id="ppPhase">Foco</div>
+  <div class="pp-time" id="ppTime">25:00</div>
+  <div class="pp-sessions" id="ppSessions">Sessão 1 de 4</div>
+  <div class="pp-buttons">
+    <button class="btn-primary" id="pomodoroStart">Iniciar</button>
+    <button class="btn-secondary" id="pomodoroPause" disabled>Pausar</button>
+  </div>
+  <div class="pp-buttons">
+    <button class="btn-secondary" id="pomodoroSkip">Pular</button>
+    <button class="btn-danger" id="pomodoroReset">Reiniciar</button>
+  </div>
+</div>
 
 <div class="container">
 
