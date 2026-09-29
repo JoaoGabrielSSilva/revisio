@@ -480,6 +480,152 @@ document.getElementById('btnResetAll').addEventListener('click', ()=>{
   toast('Todos os dados foram apagados.');
 });
 
+/* ---------------- POMODORO ---------------- */
+const POMODORO_DURATIONS = {
+  work: 25*60,
+  short: 5*60,
+  long: 15*60
+};
+const POMODORO_LABELS = {
+  work: 'Foco',
+  short: 'Intervalo curto',
+  long: 'Descanso longo'
+};
+
+let pomodoro = {
+  phase: 'work',
+  secondsLeft: POMODORO_DURATIONS.work,
+  session: 1,
+  running: false,
+  intervalId: null
+};
+
+const pomodoroFab = document.getElementById('pomodoroFab');
+const pomodoroPanel = document.getElementById('pomodoroPanel');
+const pomodoroClose = document.getElementById('pomodoroClose');
+const pomodoroStart = document.getElementById('pomodoroStart');
+const pomodoroPause = document.getElementById('pomodoroPause');
+const pomodoroSkip = document.getElementById('pomodoroSkip');
+const pomodoroReset = document.getElementById('pomodoroReset');
+const pomodoroWidget = document.getElementById('pomodoroWidget');
+
+function formatSeconds(total){
+  const m = Math.floor(total/60).toString().padStart(2,'0');
+  const s = (total%60).toString().padStart(2,'0');
+  return `${m}:${s}`;
+}
+
+function renderPomodoro(){
+  const timeStr = formatSeconds(pomodoro.secondsLeft);
+  const phaseLabel = POMODORO_LABELS[pomodoro.phase];
+  const sessionsStr = `Sessão ${pomodoro.session} de 4`;
+
+  document.getElementById('ppPhase').textContent = phaseLabel;
+  document.getElementById('ppTime').textContent = timeStr;
+  document.getElementById('ppSessions').textContent = sessionsStr;
+
+  document.getElementById('pwPhase').textContent = phaseLabel;
+  document.getElementById('pwTime').textContent = timeStr;
+  document.getElementById('pwSessions').textContent = `Sessão ${pomodoro.session}/4`;
+
+  pomodoroStart.disabled = pomodoro.running;
+  pomodoroPause.disabled = !pomodoro.running;
+}
+
+function pomodoroTick(){
+  pomodoro.secondsLeft--;
+  if(pomodoro.secondsLeft < 0){
+    pomodoroAdvancePhase();
+    return;
+  }
+  renderPomodoro();
+}
+
+function pomodoroAdvancePhase(){
+  if(pomodoro.phase === 'work'){
+    if(pomodoro.session >= 4){
+      pomodoro.phase = 'long';
+      pomodoro.session = 1;
+    } else {
+      pomodoro.phase = 'short';
+    }
+  } else {
+    if(pomodoro.phase === 'short') pomodoro.session++;
+    pomodoro.phase = 'work';
+  }
+  pomodoro.secondsLeft = POMODORO_DURATIONS[pomodoro.phase];
+  playPomodoroSound();
+  pomodoroPauseTimer();
+  toast(`${POMODORO_LABELS[pomodoro.phase]} iniciado!`);
+  renderPomodoro();
+}
+
+function playPomodoroSound(){
+  try{
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const beep = (start, freq)=>{
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.001, ctx.currentTime + start);
+      gain.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + 0.3);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + start);
+      osc.stop(ctx.currentTime + start + 0.32);
+    };
+    beep(0, 880);
+    beep(0.35, 880);
+    beep(0.7, 1046);
+  }catch(e){ /* áudio não suportado, ignora silenciosamente */ }
+}
+
+function pomodoroStartTimer(){
+  if(pomodoro.running) return;
+  pomodoro.running = true;
+  pomodoroWidget.classList.add('active');
+  pomodoro.intervalId = setInterval(pomodoroTick, 1000);
+  renderPomodoro();
+}
+
+function pomodoroPauseTimer(){
+  pomodoro.running = false;
+  clearInterval(pomodoro.intervalId);
+  renderPomodoro();
+}
+
+function pomodoroResetTimer(){
+  pomodoro.running = false;
+  clearInterval(pomodoro.intervalId);
+  pomodoro.phase = 'work';
+  pomodoro.session = 1;
+  pomodoro.secondsLeft = POMODORO_DURATIONS.work;
+  pomodoroWidget.classList.remove('active');
+  renderPomodoro();
+}
+
+function pomodoroSkipPhase(){
+  clearInterval(pomodoro.intervalId);
+  pomodoro.secondsLeft = -1;
+  pomodoroAdvancePhase();
+  if(pomodoro.running) pomodoro.intervalId = setInterval(pomodoroTick, 1000);
+}
+
+pomodoroFab.addEventListener('click', ()=>{
+  pomodoroPanel.classList.toggle('active');
+});
+pomodoroClose.addEventListener('click', ()=>{
+  pomodoroPanel.classList.remove('active');
+});
+pomodoroStart.addEventListener('click', pomodoroStartTimer);
+pomodoroPause.addEventListener('click', pomodoroPauseTimer);
+pomodoroSkip.addEventListener('click', pomodoroSkipPhase);
+pomodoroReset.addEventListener('click', pomodoroResetTimer);
+
+renderPomodoro();
+
 /* ---------------- INIT ---------------- */
 function renderAll(){
   renderTopics();
